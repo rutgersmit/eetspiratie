@@ -1,0 +1,119 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-gray-50 text-gray-900 antialiased;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-primary {
+    @apply btn bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500;
+  }
+
+  .btn-secondary {
+    @apply btn bg-gray-100 text-gray-700 hover:bg-gray-200 focus:ring-gray-500;
+  }
+
+  .btn-danger {
+    @apply btn bg-red-600 text-white hover:bg-red-700 focus:ring-red-500;
+  }
+
+  .input {
+    @apply block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500;
+  }
+
+  .label {
+    @apply block text-sm font-medium text-gray-700 mb-1;
+  }
+
+  .card {
+    @apply bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden;
+  }
+}
+
+/* Custom scrollbar */
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    @apply bg-gray-100 rounded-full;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    @apply bg-gray-300 rounded-full hover:bg-gray-400;
+  }
+}
+
+/* Print styles */
+@media print {
+  body {
+    background: white !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  img {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .card {
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  /* Hide navigation elements */
+  header nav {
+    display: none !important;
+  }
+
+  /* Recipe print layout */
+  .print-layout {
+    display: grid !important;
+    grid-template-columns: 200px 1fr !important;
+    gap: 2rem !important;
+    align-items: start !important;
+  }
+
+  .print-layout .print-image {
+    width: 200px !important;
+    height: 150px !important;
+    object-fit: cover !important;
+  }
+
+  .print-layout .print-content {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 2rem !important;
+  }
+
+  .print-layout .print-ingredients {
+    order: 2 !important;
+    min-width: 200px !important;
+    border-left: 1px solid #e5e7eb !important;
+    padding-left: 1.5rem !important;
+  }
+
+  .print-layout .print-description {
+    order: 1 !important;
+    flex: 1 !important;
+  }
+}

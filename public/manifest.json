@@ -1,0 +1,24 @@
+{
+  "name": "Eetspiratie",
+  "short_name": "Eetspiratie",
+  "description": "Jouw recepten, altijd bij de hand",
+  "start_url": "/recipes",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ee751c",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
