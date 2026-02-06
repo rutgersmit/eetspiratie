@@ -1,48 +1,27 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import { Recipe } from '@/types/database'
 import RecipeCard from './RecipeCard'
 import SearchBar from './SearchBar'
 import SortMenu from './SortMenu'
-import { createClient } from '@/lib/supabase/client'
 
 type SortOption = 'newest' | 'oldest' | 'title-asc' | 'title-desc'
-
-interface RecipeListProps {
-  initialRecipes: Recipe[]
-}
 
 interface RecipeWithSignedUrl extends Recipe {
   signedImageUrl?: string
 }
 
+interface RecipeListProps {
+  initialRecipes: RecipeWithSignedUrl[]
+}
+
 export default function RecipeList({ initialRecipes }: RecipeListProps) {
-  const [recipes, setRecipes] = useState<RecipeWithSignedUrl[]>(initialRecipes)
   const [searchQuery, setSearchQuery] = useState('')
   const [sortOption, setSortOption] = useState<SortOption>('newest')
-  const supabase = createClient()
-
-  useEffect(() => {
-    async function loadSignedUrls() {
-      const recipesWithUrls = await Promise.all(
-        initialRecipes.map(async (recipe) => {
-          if (recipe.image_path) {
-            const { data } = await supabase.storage
-              .from('recipe-images')
-              .createSignedUrl(recipe.image_path, 3600)
-            return { ...recipe, signedImageUrl: data?.signedUrl }
-          }
-          return recipe
-        })
-      )
-      setRecipes(recipesWithUrls)
-    }
-    loadSignedUrls()
-  }, [initialRecipes, supabase.storage])
 
   const filteredAndSortedRecipes = useMemo(() => {
-    let result = [...recipes]
+    let result = [...initialRecipes]
 
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase()
@@ -70,7 +49,7 @@ export default function RecipeList({ initialRecipes }: RecipeListProps) {
     })
 
     return result
-  }, [recipes, searchQuery, sortOption])
+  }, [initialRecipes, searchQuery, sortOption])
 
   return (
     <div>
@@ -143,8 +122,8 @@ export default function RecipeList({ initialRecipes }: RecipeListProps) {
       )}
 
       <div className="mt-6 text-center text-sm text-gray-500">
-        {filteredAndSortedRecipes.length} van {recipes.length} recept
-        {recipes.length !== 1 ? 'en' : ''}
+        {filteredAndSortedRecipes.length} van {initialRecipes.length} recept
+        {initialRecipes.length !== 1 ? 'en' : ''}
       </div>
     </div>
   )

@@ -17,5 +17,17 @@ export default async function RecipesPage() {
     console.error("Error fetching recipes:", error);
   }
 
-  return <RecipeList initialRecipes={(recipes as Recipe[]) || []} />;
+  const recipesWithUrls = await Promise.all(
+    ((recipes as Recipe[]) || []).map(async (recipe) => {
+      if (recipe.image_path) {
+        const { data } = await supabase.storage
+          .from("recipe-images")
+          .createSignedUrl(recipe.image_path, 3600);
+        return { ...recipe, signedImageUrl: data?.signedUrl ?? undefined };
+      }
+      return recipe;
+    }),
+  );
+
+  return <RecipeList initialRecipes={recipesWithUrls} />;
 }
