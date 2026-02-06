@@ -1,20 +1,21 @@
-import { createClient } from '@/lib/supabase/server'
-import RecipeList from '@/components/RecipeList'
-import { Recipe } from '@/types/database'
+import { requireAuth } from "@/lib/supabase/server";
+import RecipeList from "@/components/RecipeList";
+import { Recipe } from "@/types/database";
 
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic";
 
 export default async function RecipesPage() {
-  const supabase = await createClient()
+  const { supabase, user } = await requireAuth();
 
   const { data: recipes, error } = await supabase
-    .from('recipes')
-    .select('*')
-    .order('created_at', { ascending: false })
+    .from("recipes")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false });
 
   if (error) {
-    console.error('Error fetching recipes:', error)
+    console.error("Error fetching recipes:", error);
   }
 
-  return <RecipeList initialRecipes={recipes as Recipe[] || []} />
+  return <RecipeList initialRecipes={(recipes as Recipe[]) || []} />;
 }

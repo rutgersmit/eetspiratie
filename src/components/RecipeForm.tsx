@@ -1,114 +1,127 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
-import { Recipe } from '@/types/database'
-import { generateSlug } from '@/lib/utils'
-import ImageUploader from './ImageUploader'
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+import { Recipe } from "@/types/database";
+import { generateSlug } from "@/lib/utils";
+import ImageUploader from "./ImageUploader";
 
 interface RecipeFormProps {
-  recipe?: Recipe
-  existingImageUrl?: string
+  recipe?: Recipe;
+  existingImageUrl?: string;
 }
 
-export default function RecipeForm({ recipe, existingImageUrl }: RecipeFormProps) {
-  const [title, setTitle] = useState(recipe?.title || '')
-  const [description, setDescription] = useState(recipe?.description || '')
-  const [ingredients, setIngredients] = useState(recipe?.ingredients || '')
-  const [sourceUrl, setSourceUrl] = useState(recipe?.source_url || '')
-  const [imageFile, setImageFile] = useState<File | null>(null)
-  const [imagePreview, setImagePreview] = useState<string | null>(existingImageUrl || null)
-  const [removeImage, setRemoveImage] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const router = useRouter()
-  const supabase = createClient()
+export default function RecipeForm({
+  recipe,
+  existingImageUrl,
+}: RecipeFormProps) {
+  const [title, setTitle] = useState(recipe?.title || "");
+  const [description, setDescription] = useState(recipe?.description || "");
+  const [ingredients, setIngredients] = useState(recipe?.ingredients || "");
+  const [sourceUrl, setSourceUrl] = useState(recipe?.source_url || "");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(
+    existingImageUrl || null,
+  );
+  const [removeImage, setRemoveImage] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+  const supabase = createClient();
 
-  const isEditing = !!recipe
+  const isEditing = !!recipe;
 
   const handleImageChange = (file: File | null) => {
-    setImageFile(file)
-    setRemoveImage(false)
+    setImageFile(file);
+    setRemoveImage(false);
     if (file) {
-      const reader = new FileReader()
+      const reader = new FileReader();
       reader.onloadend = () => {
-        setImagePreview(reader.result as string)
-      }
-      reader.readAsDataURL(file)
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     } else {
-      setImagePreview(existingImageUrl || null)
+      setImagePreview(existingImageUrl || null);
     }
-  }
+  };
 
   const handleRemoveImage = () => {
-    setImageFile(null)
-    setImagePreview(null)
-    setRemoveImage(true)
-  }
+    setImageFile(null);
+    setImagePreview(null);
+    setRemoveImage(true);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
+    e.preventDefault();
+    setError(null);
 
     if (!title.trim()) {
-      setError('Titel is verplicht')
-      return
+      setError("Titel is verplicht");
+      return;
     }
 
     if (!ingredients.trim()) {
-      setError('Ingrediënten zijn verplicht')
-      return
+      setError("Ingrediënten zijn verplicht");
+      return;
     }
 
-    setLoading(true)
+    setLoading(true);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('Niet ingelogd')
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("Niet ingelogd");
 
-      let imagePath = recipe?.image_path || null
+      let imagePath = recipe?.image_path || null;
 
       // Handle image upload
       if (imageFile) {
-        const fileExt = imageFile.name.split('.').pop()
-        const fileName = `${user.id}/${Date.now()}.${fileExt}`
+        const fileExt = imageFile.name.split(".").pop();
+        const fileName = `${user.id}/${Date.now()}.${fileExt}`;
 
         // Delete old image if exists
         if (recipe?.image_path) {
-          await supabase.storage.from('recipe-images').remove([recipe.image_path])
+          await supabase.storage
+            .from("recipe-images")
+            .remove([recipe.image_path]);
         }
 
         const { error: uploadError } = await supabase.storage
-          .from('recipe-images')
-          .upload(fileName, imageFile)
+          .from("recipe-images")
+          .upload(fileName, imageFile);
 
-        if (uploadError) throw uploadError
-        imagePath = fileName
+        if (uploadError) throw uploadError;
+        imagePath = fileName;
       } else if (removeImage && recipe?.image_path) {
         // Remove existing image
-        await supabase.storage.from('recipe-images').remove([recipe.image_path])
-        imagePath = null
+        await supabase.storage
+          .from("recipe-images")
+          .remove([recipe.image_path]);
+        imagePath = null;
       }
 
       // Generate unique slug
-      const baseSlug = generateSlug(title.trim())
-      let slug = baseSlug
-      let slugSuffix = 0
+      const baseSlug = generateSlug(title.trim());
+      let slug = baseSlug;
+      let slugSuffix = 0;
 
       // Check for existing slugs and make unique
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: existingSlugs } = await (supabase as any)
-        .from('recipes')
-        .select('slug')
-        .like('slug', `${baseSlug}%`)
-        .neq('id', recipe?.id || '')
+        .from("recipes")
+        .select("slug")
+        .like("slug", `${baseSlug}%`)
+        .neq("id", recipe?.id || "");
 
       if (existingSlugs && existingSlugs.length > 0) {
-        const slugSet = new Set(existingSlugs.map((r: { slug: string }) => r.slug))
+        const slugSet = new Set(
+          existingSlugs.map((r: { slug: string }) => r.slug),
+        );
         while (slugSet.has(slug)) {
-          slugSuffix++
-          slug = `${baseSlug}-${slugSuffix}`
+          slugSuffix++;
+          slug = `${baseSlug}-${slugSuffix}`;
         }
       }
 
@@ -120,16 +133,17 @@ export default function RecipeForm({ recipe, existingImageUrl }: RecipeFormProps
           ingredients: ingredients.trim(),
           image_path: imagePath,
           source_url: sourceUrl.trim() || null,
-        }
+        };
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { error: updateError } = await (supabase as any)
-          .from('recipes')
+          .from("recipes")
           .update(updateData)
-          .eq('id', recipe.id)
+          .eq("id", recipe.id)
+          .eq("user_id", user.id);
 
-        if (updateError) throw updateError
-        router.push(`/recipes/${updateData.slug}`)
+        if (updateError) throw updateError;
+        router.push(`/recipes/${updateData.slug}`);
       } else {
         const insertData = {
           user_id: user.id,
@@ -139,29 +153,29 @@ export default function RecipeForm({ recipe, existingImageUrl }: RecipeFormProps
           ingredients: ingredients.trim(),
           image_path: imagePath,
           source_url: sourceUrl.trim() || null,
-        }
+        };
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data, error: insertError } = await (supabase as any)
-          .from('recipes')
+          .from("recipes")
           .insert(insertData)
           .select()
-          .single()
+          .single();
 
-        if (insertError) throw insertError
+        if (insertError) throw insertError;
         if (data) {
-          router.push(`/recipes/${data.slug}`)
+          router.push(`/recipes/${data.slug}`);
         }
       }
 
-      router.refresh()
+      router.refresh();
     } catch (err) {
-      console.error('Error saving recipe:', err)
-      setError(err instanceof Error ? err.message : 'Er is iets misgegaan')
+      console.error("Error saving recipe:", err);
+      setError(err instanceof Error ? err.message : "Er is iets misgegaan");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <form onSubmit={handleSubmit} className="max-w-2xl">
@@ -223,9 +237,7 @@ export default function RecipeForm({ recipe, existingImageUrl }: RecipeFormProps
             rows={8}
             required
           />
-          <p className="mt-1 text-sm text-gray-500">
-            Eén ingrediënt per regel
-          </p>
+          <p className="mt-1 text-sm text-gray-500">Eén ingrediënt per regel</p>
         </div>
 
         <div>
@@ -273,9 +285,9 @@ export default function RecipeForm({ recipe, existingImageUrl }: RecipeFormProps
               Opslaan...
             </span>
           ) : isEditing ? (
-            'Opslaan'
+            "Opslaan"
           ) : (
-            'Recept toevoegen'
+            "Recept toevoegen"
           )}
         </button>
         <button
@@ -287,5 +299,5 @@ export default function RecipeForm({ recipe, existingImageUrl }: RecipeFormProps
         </button>
       </div>
     </form>
-  )
+  );
 }

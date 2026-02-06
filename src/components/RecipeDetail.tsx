@@ -58,10 +58,16 @@ export default function RecipeDetail({
   const togglePublic = async () => {
     setTogglingPublic(true);
     try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("Niet ingelogd");
+
       const { error } = await supabase
         .from("recipes")
         .update({ is_public: !isPublic } as unknown as never)
-        .eq("id", recipe.id);
+        .eq("id", recipe.id)
+        .eq("user_id", user.id);
 
       if (error) throw error;
       setIsPublic(!isPublic);
@@ -86,6 +92,11 @@ export default function RecipeDetail({
   const handleDelete = async () => {
     setDeleting(true);
     try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("Niet ingelogd");
+
       if (recipe.image_path) {
         await supabase.storage
           .from("recipe-images")
@@ -95,7 +106,8 @@ export default function RecipeDetail({
       const { error } = await supabase
         .from("recipes")
         .delete()
-        .eq("id", recipe.id);
+        .eq("id", recipe.id)
+        .eq("user_id", user.id);
 
       if (error) throw error;
 

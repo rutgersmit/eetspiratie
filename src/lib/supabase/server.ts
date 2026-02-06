@@ -1,5 +1,6 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { cookies } from 'next/headers'
+import { redirect } from 'next/navigation'
 import { Database } from '@/types/database'
 
 type CookieToSet = { name: string; value: string; options: CookieOptions }
@@ -28,4 +29,15 @@ export async function createClient() {
       },
     }
   )
+}
+
+export async function requireAuth() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    redirect('/login')
+  }
+
+  return { supabase, user }
 }
