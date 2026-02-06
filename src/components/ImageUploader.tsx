@@ -9,12 +9,26 @@ interface ImageUploaderProps {
   onRemove: () => void
 }
 
+const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+
+function validateImage(file: File): string | null {
+  if (!ALLOWED_TYPES.includes(file.type)) {
+    return 'Alleen JPG, PNG, GIF en WebP zijn toegestaan'
+  }
+  if (file.size > MAX_FILE_SIZE) {
+    return 'Afbeelding mag maximaal 10MB zijn'
+  }
+  return null
+}
+
 export default function ImageUploader({
   preview,
   onChange,
   onRemove,
 }: ImageUploaderProps) {
   const [isDragging, setIsDragging] = useState(false)
+  const [validationError, setValidationError] = useState<string | null>(null)
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -43,7 +57,9 @@ export default function ImageUploader({
 
       if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
         const file = e.dataTransfer.files[0]
-        if (file.type.startsWith('image/')) {
+        const error = validateImage(file)
+        setValidationError(error)
+        if (!error) {
           onChange(file)
         }
         e.dataTransfer.clearData()
@@ -54,7 +70,12 @@ export default function ImageUploader({
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      onChange(e.target.files[0])
+      const file = e.target.files[0]
+      const error = validateImage(file)
+      setValidationError(error)
+      if (!error) {
+        onChange(file)
+      }
     }
   }
 
@@ -87,7 +108,7 @@ export default function ImageUploader({
             </svg>
             <input
               type="file"
-              accept="image/*"
+              accept=".jpg,.jpeg,.png,.gif,.webp"
               onChange={handleFileInput}
               className="hidden"
             />
@@ -130,10 +151,13 @@ export default function ImageUploader({
     >
       <input
         type="file"
-        accept="image/*"
+        accept=".jpg,.jpeg,.png,.gif,.webp"
         onChange={handleFileInput}
         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
       />
+      {validationError && (
+        <p className="mb-2 text-sm text-red-600">{validationError}</p>
+      )}
       <svg
         className={`mx-auto h-12 w-12 ${
           isDragging ? 'text-primary-500' : 'text-gray-400'

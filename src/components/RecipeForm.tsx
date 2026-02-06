@@ -78,7 +78,15 @@ export default function RecipeForm({
 
       // Handle image upload
       if (imageFile) {
-        const fileExt = imageFile.name.split(".").pop();
+        const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+        if (!allowedTypes.includes(imageFile.type)) {
+          throw new Error("Alleen JPG, PNG, GIF en WebP zijn toegestaan");
+        }
+        if (imageFile.size > 10 * 1024 * 1024) {
+          throw new Error("Afbeelding mag maximaal 10MB zijn");
+        }
+
+        const fileExt = imageFile.name.split(".").pop()?.toLowerCase();
         const fileName = `${user.id}/${Date.now()}.${fileExt}`;
 
         // Delete old image if exists
