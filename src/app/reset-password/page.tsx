@@ -45,7 +45,7 @@ export default function ResetPasswordPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 to-primary-100 px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-primary-600 mb-2">Eetspiratie</h1>
+          <h1 className="text-4xl font-bold text-primary-600 mb-2 tracking-tight" style={{ fontFamily: 'var(--font-quicksand)' }}>Eetspiratie</h1>
           <p className="text-gray-600">Nieuw wachtwoord instellen</p>
         </div>
 

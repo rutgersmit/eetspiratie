@@ -1,8 +1,9 @@
 import type { Metadata, Viewport } from 'next'
-import { Inter } from 'next/font/google'
+import { Inter, Quicksand } from 'next/font/google'
 import './globals.css'
 
 const inter = Inter({ subsets: ['latin'] })
+const quicksand = Quicksand({ subsets: ['latin'], variable: '--font-quicksand' })
 
 export const metadata: Metadata = {
   title: 'Eetspiratie - Jouw Recepten App',
@@ -41,7 +42,7 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
       </head>
-      <body className={inter.className}>
+      <body className={`${inter.className} ${quicksand.variable}`}>
         {children}
         <script
           dangerouslySetInnerHTML={{

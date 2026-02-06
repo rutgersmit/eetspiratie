@@ -25,7 +25,7 @@ export default function Header({ userEmail }: HeaderProps) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <Link href="/recipes" className="flex items-center gap-2">
-            <span className="text-2xl font-bold text-primary-600">Eetspiratie</span>
+            <span className="text-2xl font-bold text-primary-600 tracking-tight" style={{ fontFamily: 'var(--font-quicksand)' }}>Eetspiratie</span>
           </Link>
 
           <div className="flex items-center gap-4 print:hidden">
