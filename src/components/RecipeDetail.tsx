@@ -18,6 +18,7 @@ export default function RecipeDetail({
 }: RecipeDetailProps) {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showImageModal, setShowImageModal] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [cookingMode, setCookingMode] = useState(false);
@@ -86,6 +87,26 @@ export default function RecipeDetail({
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       console.error("Error copying:", err);
+    }
+  };
+
+  const handleDownloadImage = async () => {
+    if (!signedImageUrl) return;
+    try {
+      const response = await fetch(signedImageUrl);
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const ext = blob.type.split("/")[1] || "jpg";
+      a.download = `${recipe.title}.${ext}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Download error:", err);
+      window.open(signedImageUrl, "_blank");
     }
   };
 
@@ -166,7 +187,11 @@ export default function RecipeDetail({
         <div className="card overflow-hidden print:shadow-none print:border-none">
           {/* Screen layout: image at top */}
           {signedImageUrl && (
-            <div className="relative aspect-video sm:aspect-[21/9] print:hidden">
+            <button
+              type="button"
+              onClick={() => setShowImageModal(true)}
+              className="relative aspect-video sm:aspect-[21/9] print:hidden w-full cursor-zoom-in group/img"
+            >
               <Image
                 src={signedImageUrl}
                 alt={recipe.title}
@@ -175,7 +200,14 @@ export default function RecipeDetail({
                 priority
                 sizes="(max-width: 768px) 100vw, 768px"
               />
-            </div>
+              <div className="absolute inset-0 bg-black/0 group-hover/img:bg-black/10 transition-colors flex items-center justify-center">
+                <span className="bg-black/50 text-white rounded-full p-2 opacity-0 group-hover/img:opacity-100 transition-opacity">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                  </svg>
+                </span>
+              </div>
+            </button>
           )}
 
           <div className="p-6 sm:p-8 print:p-0">
@@ -417,6 +449,65 @@ export default function RecipeDetail({
                 {deleting ? "Verwijderen..." : "Verwijderen"}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Image lightbox modal */}
+      {showImageModal && signedImageUrl && (
+        <div
+          className="fixed inset-0 bg-black/80 flex flex-col items-center justify-center z-50"
+          onClick={() => setShowImageModal(false)}
+        >
+          {/* Top bar with actions */}
+          <div
+            className="absolute top-0 left-0 right-0 flex items-center justify-between p-4 z-10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-2">
+              <a
+                href={signedImageUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-3 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg text-sm backdrop-blur-sm transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+                Nieuw tabblad
+              </a>
+              <button
+                onClick={handleDownloadImage}
+                className="flex items-center gap-2 px-3 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg text-sm backdrop-blur-sm transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Download
+              </button>
+            </div>
+            <button
+              onClick={() => setShowImageModal(false)}
+              className="p-2 bg-white/10 hover:bg-white/20 text-white rounded-lg backdrop-blur-sm transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Full-size image */}
+          <div
+            className="relative w-full h-full flex items-center justify-center p-12 sm:p-16"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Image
+              src={signedImageUrl}
+              alt={recipe.title}
+              fill
+              className="object-contain"
+              sizes="100vw"
+            />
           </div>
         </div>
       )}
