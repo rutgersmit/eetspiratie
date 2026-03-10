@@ -1,8 +1,7 @@
-import { requireAuth } from "@/lib/supabase/server";
+import { unstable_cache } from "next/cache";
+import { requireAuth, createClientWithToken } from "@/lib/supabase/server";
 import RecipeList from "@/components/RecipeList";
 import { Recipe } from "@/types/database";
-
-export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 24;
 
@@ -18,48 +17,70 @@ export default async function RecipesPage({
   const params = await searchParams;
   const page = Math.max(1, parseInt((params.page as string) || "1", 10));
   const searchQuery = (params.q as string) || "";
-  const sortOption: SortOption =
-    (params.sort as SortOption) || "newest";
+  const sortOption: SortOption = (params.sort as SortOption) || "newest";
 
-  const offset = (page - 1) * PAGE_SIZE;
+  // Get the access token to authenticate the cached query without cookies
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  const accessToken = session!.access_token;
 
-  let query = supabase
-    .from("recipes")
-    .select("*", { count: "exact" })
-    .eq("user_id", user.id);
+  const fetchRecipes = unstable_cache(
+    async (
+      userId: string,
+      pg: number,
+      search: string,
+      sort: SortOption,
+    ) => {
+      const client = createClientWithToken(accessToken);
 
-  if (searchQuery.trim()) {
-    query = query.or(
-      `title.ilike.%${searchQuery}%,ingredients.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`,
-    );
-  }
+      let query = client
+        .from("recipes")
+        .select("*", { count: "exact" })
+        .eq("user_id", userId);
 
-  switch (sortOption) {
-    case "oldest":
-      query = query.order("created_at", { ascending: true });
-      break;
-    case "title-asc":
-      query = query.order("title", { ascending: true });
-      break;
-    case "title-desc":
-      query = query.order("title", { ascending: false });
-      break;
-    default:
-      query = query.order("created_at", { ascending: false });
-  }
+      if (search.trim()) {
+        query = query.or(
+          `title.ilike.%${search}%,ingredients.ilike.%${search}%,description.ilike.%${search}%`,
+        );
+      }
 
-  const { data: recipes, error, count } = await query.range(
-    offset,
-    offset + PAGE_SIZE - 1,
+      switch (sort) {
+        case "oldest":
+          query = query.order("created_at", { ascending: true });
+          break;
+        case "title-asc":
+          query = query.order("title", { ascending: true });
+          break;
+        case "title-desc":
+          query = query.order("title", { ascending: false });
+          break;
+        default:
+          query = query.order("created_at", { ascending: false });
+      }
+
+      const { data, error, count } = await query.range(
+        (pg - 1) * PAGE_SIZE,
+        pg * PAGE_SIZE - 1,
+      );
+
+      if (error) console.error("Error fetching recipes:", error);
+
+      return { recipes: (data as Recipe[]) || [], count: count ?? 0 };
+    },
+    ["user-recipes"],
+    { tags: [`recipes-${user.id}`], revalidate: 3600 },
   );
 
-  if (error) {
-    console.error("Error fetching recipes:", error);
-  }
+  const { recipes: recipeList, count } = await fetchRecipes(
+    user.id,
+    page,
+    searchQuery,
+    sortOption,
+  );
 
-  const recipeList = (recipes as Recipe[]) || [];
-
-  // Batch signed URL generation — single API call instead of one per recipe
+  // Signed URL generation runs on every request (one batch call, not cached —
+  // URLs expire after 3600s so caching them alongside recipe data is unreliable)
   const imagePaths = recipeList
     .filter((r) => r.image_path)
     .map((r) => r.image_path as string);
@@ -89,7 +110,7 @@ export default async function RecipesPage({
   return (
     <RecipeList
       initialRecipes={recipesWithUrls}
-      totalCount={count ?? 0}
+      totalCount={count}
       pageSize={PAGE_SIZE}
       currentPage={page}
       searchQuery={searchQuery}

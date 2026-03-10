@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Recipe } from "@/types/database";
 import { generateSlug } from "@/lib/utils";
+import { invalidateRecipesCache } from "@/lib/actions";
 import ImageUploader from "./ImageUploader";
 
 interface RecipeFormProps {
@@ -151,6 +152,7 @@ export default function RecipeForm({
           .eq("user_id", user.id);
 
         if (updateError) throw updateError;
+        await invalidateRecipesCache();
         router.push(`/recipes/${updateData.slug}`);
       } else {
         const insertData = {
@@ -172,11 +174,11 @@ export default function RecipeForm({
 
         if (insertError) throw insertError;
         if (data) {
+          await invalidateRecipesCache();
           router.push(`/recipes/${data.slug}`);
         }
       }
 
-      router.refresh();
     } catch (err) {
       console.error("Error saving recipe:", err);
       setError(err instanceof Error ? err.message : "Er is iets misgegaan");

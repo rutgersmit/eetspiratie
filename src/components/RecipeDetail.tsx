@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Recipe, RecipeUpdate } from "@/types/database";
 import { createClient } from "@/lib/supabase/client";
+import { invalidateRecipesCache } from "@/lib/actions";
 
 interface RecipeDetailProps {
   recipe: Recipe;
@@ -132,8 +133,8 @@ export default function RecipeDetail({
 
       if (error) throw error;
 
+      await invalidateRecipesCache();
       router.push("/recipes");
-      router.refresh();
     } catch (err) {
       console.error("Error deleting recipe:", err);
       alert("Er ging iets mis bij het verwijderen");

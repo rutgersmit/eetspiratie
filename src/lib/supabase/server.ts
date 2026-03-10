@@ -31,6 +31,17 @@ export async function createClient() {
   )
 }
 
+export function createClientWithToken(accessToken: string) {
+  return createServerClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: { getAll: () => [], setAll: () => {} },
+      global: { headers: { Authorization: `Bearer ${accessToken}` } },
+    },
+  );
+}
+
 export async function requireAuth() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
