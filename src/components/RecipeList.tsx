@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Recipe } from '@/types/database'
 import RecipeCard from './RecipeCard'
 import SearchBar from './SearchBar'
@@ -14,42 +15,67 @@ interface RecipeWithSignedUrl extends Recipe {
 
 interface RecipeListProps {
   initialRecipes: RecipeWithSignedUrl[]
+  totalCount: number
+  pageSize: number
+  currentPage: number
+  searchQuery: string
+  sortOption: SortOption
 }
 
-export default function RecipeList({ initialRecipes }: RecipeListProps) {
-  const [searchQuery, setSearchQuery] = useState('')
-  const [sortOption, setSortOption] = useState<SortOption>('newest')
+export default function RecipeList({
+  initialRecipes,
+  totalCount,
+  pageSize,
+  currentPage,
+  searchQuery,
+  sortOption,
+}: RecipeListProps) {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const [searchInput, setSearchInput] = useState(searchQuery)
 
-  const filteredAndSortedRecipes = useMemo(() => {
-    let result = [...initialRecipes]
+  const totalPages = Math.ceil(totalCount / pageSize)
 
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase()
-      result = result.filter(
-        (recipe) =>
-          recipe.title.toLowerCase().includes(query) ||
-          recipe.ingredients.toLowerCase().includes(query) ||
-          (recipe.description && recipe.description.toLowerCase().includes(query))
-      )
-    }
+  const updateUrl = useCallback(
+    (updates: { q?: string; sort?: string; page?: number }) => {
+      const next = new URLSearchParams(searchParams.toString())
 
-    result.sort((a, b) => {
-      switch (sortOption) {
-        case 'newest':
-          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        case 'oldest':
-          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-        case 'title-asc':
-          return a.title.localeCompare(b.title, 'nl')
-        case 'title-desc':
-          return b.title.localeCompare(a.title, 'nl')
-        default:
-          return 0
+      if (updates.q !== undefined) {
+        if (updates.q) next.set('q', updates.q)
+        else next.delete('q')
+        next.delete('page')
       }
-    })
 
-    return result
-  }, [initialRecipes, searchQuery, sortOption])
+      if (updates.sort !== undefined) {
+        if (updates.sort && updates.sort !== 'newest') next.set('sort', updates.sort)
+        else next.delete('sort')
+        next.delete('page')
+      }
+
+      if (updates.page !== undefined) {
+        if (updates.page > 1) next.set('page', String(updates.page))
+        else next.delete('page')
+      }
+
+      router.push(`?${next.toString()}`)
+    },
+    [router, searchParams],
+  )
+
+  // Debounce search input → URL update
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchInput !== searchQuery) {
+        updateUrl({ q: searchInput })
+      }
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [searchInput]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Sync input when URL changes (e.g. browser back/forward)
+  useEffect(() => {
+    setSearchInput(searchQuery)
+  }, [searchQuery])
 
   return (
     <div>
@@ -59,13 +85,13 @@ export default function RecipeList({ initialRecipes }: RecipeListProps) {
         </h1>
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="flex-1">
-            <SearchBar value={searchQuery} onChange={setSearchQuery} />
+            <SearchBar value={searchInput} onChange={setSearchInput} />
           </div>
-          <SortMenu value={sortOption} onChange={setSortOption} />
+          <SortMenu value={sortOption} onChange={(sort) => updateUrl({ sort })} />
         </div>
       </div>
 
-      {filteredAndSortedRecipes.length === 0 ? (
+      {initialRecipes.length === 0 ? (
         <div className="text-center py-12">
           {searchQuery ? (
             <>
@@ -115,15 +141,37 @@ export default function RecipeList({ initialRecipes }: RecipeListProps) {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-          {filteredAndSortedRecipes.map((recipe) => (
+          {initialRecipes.map((recipe) => (
             <RecipeCard key={recipe.id} recipe={recipe} />
           ))}
         </div>
       )}
 
+      {totalPages > 1 && (
+        <div className="mt-8 flex items-center justify-center gap-3">
+          <button
+            onClick={() => updateUrl({ page: currentPage - 1 })}
+            disabled={currentPage <= 1}
+            className="btn btn-secondary disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            ← Vorige
+          </button>
+          <span className="text-sm text-gray-600">
+            Pagina {currentPage} van {totalPages}
+          </span>
+          <button
+            onClick={() => updateUrl({ page: currentPage + 1 })}
+            disabled={currentPage >= totalPages}
+            className="btn btn-secondary disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Volgende →
+          </button>
+        </div>
+      )}
+
       <div className="mt-6 text-center text-sm text-gray-500">
-        {filteredAndSortedRecipes.length} van {initialRecipes.length} recept
-        {initialRecipes.length !== 1 ? 'en' : ''}
+        {totalCount} recept{totalCount !== 1 ? 'en' : ''}
+        {searchQuery ? ' gevonden' : ' totaal'}
       </div>
     </div>
   )
