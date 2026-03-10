@@ -2,6 +2,7 @@
 const nextConfig = {
   output: 'standalone',
   images: {
+    minimumCacheTTL: 3600,
     remotePatterns: [
       {
         protocol: 'https',
