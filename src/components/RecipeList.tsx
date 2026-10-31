@@ -2,19 +2,13 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Recipe } from '@/types/database'
+import { Recipe, SortOption } from '@/types/database'
 import RecipeCard from './RecipeCard'
 import SearchBar from './SearchBar'
 import SortMenu from './SortMenu'
 
-type SortOption = 'newest' | 'oldest' | 'title-asc' | 'title-desc'
-
-interface RecipeWithSignedUrl extends Recipe {
-  signedImageUrl?: string
-}
-
 interface RecipeListProps {
-  initialRecipes: RecipeWithSignedUrl[]
+  recipes: Recipe[]
   totalCount: number
   pageSize: number
   currentPage: number
@@ -23,7 +17,7 @@ interface RecipeListProps {
 }
 
 export default function RecipeList({
-  initialRecipes,
+  recipes,
   totalCount,
   pageSize,
   currentPage,
@@ -91,7 +85,7 @@ export default function RecipeList({
         </div>
       </div>
 
-      {initialRecipes.length === 0 ? (
+      {recipes.length === 0 ? (
         <div className="text-center py-12">
           {searchQuery ? (
             <>
@@ -141,7 +135,7 @@ export default function RecipeList({
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-          {initialRecipes.map((recipe) => (
+          {recipes.map((recipe) => (
             <RecipeCard key={recipe.id} recipe={recipe} />
           ))}
         </div>

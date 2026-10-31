@@ -2,22 +2,17 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { logout } from '@/lib/actions'
 
 interface HeaderProps {
-  userEmail: string
+  username: string
 }
 
-export default function Header({ userEmail }: HeaderProps) {
+export default function Header({ username }: HeaderProps) {
   const [showMenu, setShowMenu] = useState(false)
-  const router = useRouter()
-  const supabase = createClient()
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
-    router.push('/login')
-    router.refresh()
+    await logout()
   }
 
   return (
@@ -75,7 +70,7 @@ export default function Header({ userEmail }: HeaderProps) {
                 className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 transition-colors"
               >
                 <div className="w-8 h-8 bg-primary-100 text-primary-600 rounded-full flex items-center justify-center font-medium">
-                  {userEmail.charAt(0).toUpperCase()}
+                  {username.charAt(0).toUpperCase()}
                 </div>
                 <svg
                   className={`w-4 h-4 text-gray-500 transition-transform ${
@@ -102,7 +97,7 @@ export default function Header({ userEmail }: HeaderProps) {
                   />
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1">
                     <div className="px-4 py-2 border-b border-gray-100">
-                      <p className="text-sm text-gray-500 truncate">{userEmail}</p>
+                      <p className="text-sm text-gray-500 truncate">{username}</p>
                     </div>
                     <button
                       onClick={handleLogout}

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'eetspiratie-v1'
+const CACHE_NAME = 'eetspiratie-v2'
 
 const STATIC_ASSETS = [
   '/',
@@ -40,7 +40,7 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url)
   if (
     url.pathname.startsWith('/api') ||
-    url.hostname.includes('supabase')
+    url.pathname.startsWith('/_next/image')
   ) {
     return
   }

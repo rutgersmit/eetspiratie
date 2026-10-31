@@ -9,8 +9,6 @@
     "lint": "eslint src"
   },
   "dependencies": {
-    "@supabase/ssr": "^0.5.2",
-    "@supabase/supabase-js": "^2.47.10",
     "next": "^16.1.6",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
@@ -18,7 +16,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.3",
     "@eslint/js": "^9.39.2",
-    "@types/node": "^20.17.10",
+    "@types/node": "^22.20.5",
     "@types/react": "^18.3.17",
     "@types/react-dom": "^18.3.5",
     "@typescript-eslint/eslint-plugin": "^8.54.0",
@@ -31,5 +29,8 @@
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.7.2"
+  },
+  "engines": {
+    "node": ">=22.13"
   }
 }

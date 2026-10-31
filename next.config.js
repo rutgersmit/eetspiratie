@@ -1,15 +1,15 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
+  experimental: {
+    // Recipe images (max 10MB) are uploaded through a server action
+    serverActions: { bodySizeLimit: '12mb' },
+    proxyClientMaxBodySize: '12mb',
+  },
   images: {
-    minimumCacheTTL: 3600,
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: '*.supabase.co',
-        pathname: '/storage/v1/object/sign/**',
-      },
-    ],
+    // Image file names are unique and never change, so optimized versions can be cached long
+    minimumCacheTTL: 60 * 60 * 24 * 30,
+    localPatterns: [{ pathname: '/api/images/**' }],
   },
   async headers() {
     return [

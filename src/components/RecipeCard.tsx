@@ -3,13 +3,10 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { Recipe } from '@/types/database'
-
-interface RecipeWithSignedUrl extends Recipe {
-  signedImageUrl?: string
-}
+import { imageUrl } from '@/lib/utils'
 
 interface RecipeCardProps {
-  recipe: RecipeWithSignedUrl
+  recipe: Recipe
 }
 
 export default function RecipeCard({ recipe }: RecipeCardProps) {
@@ -18,14 +15,15 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
     month: 'short',
     year: 'numeric',
   })
+  const src = imageUrl(recipe.image_path)
 
   return (
     <Link href={`/recipes/${recipe.slug}`} className="block group">
       <div className="card h-full transition-shadow hover:shadow-md">
         <div className="aspect-[4/3] relative bg-gray-100">
-          {recipe.signedImageUrl ? (
+          {src ? (
             <Image
-              src={recipe.signedImageUrl}
+              src={src}
               alt={recipe.title}
               fill
               className="object-cover group-hover:scale-105 transition-transform duration-300"

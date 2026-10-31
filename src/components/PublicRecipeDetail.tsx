@@ -2,13 +2,14 @@
 
 import Image from 'next/image'
 import { Recipe } from '@/types/database'
+import { imageUrl } from '@/lib/utils'
 
 interface PublicRecipeDetailProps {
   recipe: Recipe
-  signedImageUrl: string | null
 }
 
-export default function PublicRecipeDetail({ recipe, signedImageUrl }: PublicRecipeDetailProps) {
+export default function PublicRecipeDetail({ recipe }: PublicRecipeDetailProps) {
+  const signedImageUrl = imageUrl(recipe.image_path)
   const ingredientLines = recipe.ingredients
     .split('\n')
     .filter((line) => line.trim())

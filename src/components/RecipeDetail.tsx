@@ -3,20 +3,16 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { Recipe, RecipeUpdate } from "@/types/database";
-import { createClient } from "@/lib/supabase/client";
-import { invalidateRecipesCache } from "@/lib/actions";
+import { Recipe } from "@/types/database";
+import { deleteRecipe, togglePublic as togglePublicAction } from "@/lib/actions";
+import { imageUrl } from "@/lib/utils";
 
 interface RecipeDetailProps {
   recipe: Recipe;
-  signedImageUrl: string | null;
 }
 
-export default function RecipeDetail({
-  recipe,
-  signedImageUrl,
-}: RecipeDetailProps) {
+export default function RecipeDetail({ recipe }: RecipeDetailProps) {
+  const signedImageUrl = imageUrl(recipe.image_path);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [showImageModal, setShowImageModal] = useState(false);
@@ -49,9 +45,6 @@ export default function RecipeDetail({
       }
     }
   };
-  const router = useRouter();
-  const supabase = createClient();
-
   const shareUrl =
     typeof window !== "undefined"
       ? `${window.location.origin}/r/${recipe.slug}`
@@ -60,18 +53,8 @@ export default function RecipeDetail({
   const togglePublic = async () => {
     setTogglingPublic(true);
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) throw new Error("Niet ingelogd");
-
-      const { error } = await supabase
-        .from("recipes")
-        .update({ is_public: !isPublic } as unknown as never)
-        .eq("id", recipe.id)
-        .eq("user_id", user.id);
-
-      if (error) throw error;
+      const result = await togglePublicAction(recipe.id, !isPublic);
+      if (result?.error) throw new Error(result.error);
       setIsPublic(!isPublic);
     } catch (err) {
       console.error("Error toggling public:", err);
@@ -114,31 +97,12 @@ export default function RecipeDetail({
   const handleDelete = async () => {
     setDeleting(true);
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) throw new Error("Niet ingelogd");
-
-      if (recipe.image_path) {
-        await supabase.storage
-          .from("recipe-images")
-          .remove([recipe.image_path]);
-      }
-
-      const { error } = await supabase
-        .from("recipes")
-        .delete()
-        .eq("id", recipe.id)
-        .eq("user_id", user.id);
-
-      if (error) throw error;
-
-      await invalidateRecipesCache();
-      router.push("/recipes");
+      // Redirects to /recipes on success
+      const result = await deleteRecipe(recipe.id);
+      if (result?.error) throw new Error(result.error);
     } catch (err) {
       console.error("Error deleting recipe:", err);
       alert("Er ging iets mis bij het verwijderen");
-    } finally {
       setDeleting(false);
     }
   };

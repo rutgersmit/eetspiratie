@@ -50,6 +50,8 @@ export default [
     },
     rules: {
       ...typescript.configs.recommended.rules,
+      // TypeScript already reports undefined identifiers
+      'no-undef': 'off',
       'react/react-in-jsx-scope': 'off',
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',

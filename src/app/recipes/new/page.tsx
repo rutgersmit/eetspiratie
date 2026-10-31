@@ -1,4 +1,4 @@
-import { requireAuth } from "@/lib/supabase/server";
+import { requireAuth } from "@/lib/auth";
 import RecipeForm from "@/components/RecipeForm";
 
 export default async function NewRecipePage() {
