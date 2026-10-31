@@ -36,7 +36,7 @@ self.addEventListener('fetch', (event) => {
   // Skip non-GET requests
   if (event.request.method !== 'GET') return
 
-  // Skip API requests and Supabase requests
+  // Skip API requests and optimized images
   const url = new URL(event.request.url)
   if (
     url.pathname.startsWith('/api') ||
